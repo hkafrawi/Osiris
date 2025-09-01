@@ -1,2 +1,8 @@
 #Virtual_Enviornment
 .venv
+
+#Git files
+.git
+
+#configuration file
+config.ini
