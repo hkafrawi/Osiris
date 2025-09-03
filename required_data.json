@@ -1,0 +1,34 @@
+{
+    "Chicken":{
+        "Seoudi_tags":["chicken-breasts","chicken-thigh","temry-whole-chicken-1000-1100-g","temry-whole-chicken-1100-1200-g"],
+        "Carrefour_tags":["31776","31779","419066"]
+    },
+    "Rice":{
+        "Seoudi_tags":["al-doha-rice-1-kg"],
+        "Carrefour_tags":["17997","576746"]
+    },
+    "Sugar":{
+        "Seoudi_tags":["al-doha-sugar-1-kg"],
+        "Carrefour_tags":["17964","598485"]
+    },
+    "Meat":{
+        "Seoudi_tags":["baladi-beef-kebab-halla"],
+        "Carrefour_tags":["426174"]
+    },
+    "Eggs":{
+        "Seoudi_tags":["seoudi-baladi-eggs-10-pieces","al-waha-white-eggs-10-pieces"],
+        "Carrefour_tags":["594800","228266"]
+    },
+    "Oil":{
+        "Seoudi_tags":["afia-sunflower-oil-700-ml","crystal-sunflower-oil-700-ml"],
+        "Carrefour_tags":["447683","644802","639240","644800"]
+    },
+    "Tomato":{
+        "Seoudi_tags":["mafa-baladi-tomato-1-kg"],
+        "Carrefour_tags":["32631","576747"]
+    },
+    "Foul":{
+        "Seoudi_tags":["americana-plain-fava-beans-400-g"],
+        "Carrefour_tags":["445206"]
+    }
+}

@@ -6,3 +6,6 @@
 
 #configuration file
 config.ini
+
+#ignore resulting data files
+*_tags
