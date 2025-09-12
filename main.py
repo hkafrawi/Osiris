@@ -113,7 +113,7 @@ def fetsh_data(tags_data: json, tag_name_input: str, func: Callable) -> None:
 
     df_data = pd.concat(compiled_data, ignore_index=True)
     df_data["Date"] = date.today().strftime("%m/%d/%Y")
-    df_data["Source"] = tag_name
+    df_data["Source"] = tag_name_input
     save_data_to_csv(df_data, tag_name_input)
 
 
