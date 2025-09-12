@@ -34,6 +34,7 @@ def clean_data(df, product_column_name, weight_column_name, price_column_name):
     )
     new_df = df[["Date", "Product_Name", price_column_name, "Source"]]
     new_df.columns = ["Date", "Product_Name", "Price", "Source"]
+    new_df["Date"] = pd.to_datetime(new_df["Date"], format="%m/%d/%Y")
     return new_df
 
 
@@ -82,7 +83,7 @@ date_range = st.sidebar.date_input(
 mask = (
     (df["Product_Name"] == product)
     & (df["Source"] == source)
-    & (df["Date"].between(date_range[0], date_range[1]))
+    & (df["Date"].between(pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])))
 )
 
 filtered_df = df.loc[mask]
