@@ -57,3 +57,31 @@ def load_data():
 
 
 df = load_data()
+
+# -------------------------------
+# Sidebar filters
+# -------------------------------
+st.sidebar.header("Filters")
+
+product_options = df["Product_Name"].unique().tolist()
+source_options = df["Source"].unique().tolist()
+
+product = st.sidebar.selectbox("Select product", product_options)
+source = st.sidebar.selectbox("Select source", source_options)
+
+min_date = df["Date"].min()
+max_date = df["Date"].max()
+date_range = st.sidebar.date_input(
+    "Select date range", [min_date, max_date], min_value=min_date, max_value=max_date
+)
+
+# -------------------------------
+# Filtered Data
+# -------------------------------
+mask = (
+    (df["Product_Name"] == product)
+    & (df["Source"] == source)
+    & (df["Date"].between(date_range[0], date_range[1]))
+)
+
+filtered_df = df.loc[mask]
