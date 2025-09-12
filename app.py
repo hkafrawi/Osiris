@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 import os
 
 
@@ -85,3 +86,20 @@ mask = (
 )
 
 filtered_df = df.loc[mask]
+
+# -------------------------------
+# Visualization
+# -------------------------------
+st.title("Price Tracking Dashboard")
+
+if filtered_df.empty:
+    st.warning("No data available for the selected filters.")
+else:
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.plot(filtered_df["Date"], filtered_df["Price"], marker="o")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Price")
+    ax.set_title(f"{product} price trend ({source})")
+    plt.xticks(rotation=45)
+
+    st.pyplot(fig)
