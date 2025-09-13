@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import main
 
 
 # -------------------------------
@@ -38,8 +39,9 @@ def clean_data(df, product_column_name, weight_column_name, price_column_name):
     return new_df
 
 
-@st.cache_data
+@st.cache_data(ttl=86400)
 def load_data():
+    main.run()  # Fetch new data
     all_data = []
     directories = {
         "Seoudi_tags": [
@@ -68,8 +70,8 @@ st.sidebar.header("Filters")
 product_options = df["Product_Name"].unique().tolist()
 source_options = df["Source"].unique().tolist()
 
-product = st.sidebar.selectbox("Select product", product_options)
-source = st.sidebar.selectbox("Select source", source_options)
+product = st.sidebar.multiselect("Select product", product_options, default=[])
+source = st.sidebar.multiselect("Select source", source_options, default=[])
 
 min_date = df["Date"].min()
 max_date = df["Date"].max()
@@ -80,11 +82,13 @@ date_range = st.sidebar.date_input(
 # -------------------------------
 # Filtered Data
 # -------------------------------
-mask = (
-    (df["Product_Name"] == product)
-    & (df["Source"] == source)
-    & (df["Date"].between(pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])))
-)
+mask = df["Date"].between(pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1]))
+
+if product:
+    mask &= df["Product_Name"].isin(product)
+
+if source:
+    mask &= df["Source"].isin(source)
 
 filtered_df = df.loc[mask]
 
@@ -97,10 +101,13 @@ if filtered_df.empty:
     st.warning("No data available for the selected filters.")
 else:
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.plot(filtered_df["Date"], filtered_df["Price"], marker="o")
+    for (prod, src), sub_df in filtered_df.groupby(["Product_Name", "Source"]):
+        ax.plot(sub_df["Date"], sub_df["Price"], marker="o", label=f"{prod} - {src}")
+
     ax.set_xlabel("Date")
     ax.set_ylabel("Price")
-    ax.set_title(f"{product} price trend ({source})")
+    ax.legend(loc="upper left", bbox_to_anchor=(1.05, 1), borderaxespad=0.0)
+    ax.set_title("Price Trend for Selected Products")
     plt.xticks(rotation=45)
 
     st.pyplot(fig)
