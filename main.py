@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 import json
-from datetime import date
+from datetime import date, datetime
 import configparser
 import os
 import logging
@@ -16,8 +16,16 @@ SEOUDI_QUERY = config["QUERY"]["product"]
 CARREFOUR_QUERY = config["QUERY"]["cproduct"]
 
 # Configure logging
+log_dir = "log_files"
+os.makedirs(log_dir, exist_ok=True)
+
+logging_file_name = f"log_{date.today().strftime('%m%d%Y')}.log"
+log_file_path = os.path.join(log_dir, logging_file_name)
+
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(log_file_path, mode="a"), logging.StreamHandler()],
 )
 
 
@@ -70,13 +78,19 @@ def parse_data(response):
     json_response = json.loads(response.text)
     try:
         logging.info("Parsing for Seoudi Data")
-        logging.info(json_response["data"]["product"])
+        logging.info(
+            "json file's keys number {}".format(len(json_response["data"]["product"]))
+        )
 
         result = pd.json_normalize(json_response["data"]["product"])
         return result
     except (KeyError, NotImplementedError):
         logging.error("Parsing for Carrefour Data")
-        logging.info(json_response["data"]["placements"][0]["recommendedProducts"])
+        logging.info(
+            "json file's keys number {}".format(
+                len(json_response["data"]["placements"][0]["recommendedProducts"])
+            )
+        )
 
         result = pd.json_normalize(
             json_response["data"]["placements"][0]["recommendedProducts"]
@@ -109,7 +123,7 @@ def fetsh_data(tags_data: json, tag_name_input: str, func: Callable) -> None:
         api_response = func(item)
         structured_response = parse_data(api_response)
         compiled_data.append(structured_response)
-    logging.info(f"compiled_data: {compiled_data}")
+    logging.info(f"compiled_data: {len(compiled_data)}")
 
     df_data = pd.concat(compiled_data, ignore_index=True)
     df_data["Date"] = date.today().strftime("%m/%d/%Y")
@@ -117,9 +131,34 @@ def fetsh_data(tags_data: json, tag_name_input: str, func: Callable) -> None:
     save_data_to_csv(df_data, tag_name_input)
 
 
-if __name__ == "__main__":
+def run():
+    logging.info(
+        "*** Run on {} ***".format(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
+    )
+
     with open("required_data.json", "r") as json_file:
         required_data = json.load(json_file)
 
-    fetsh_data(required_data, "Seoudi_tags", get_data_from_seoudi)
-    fetsh_data(required_data, "Carrefour_tags", get_data_from_carrefour)
+    today = date.today().strftime("%m%d%Y")
+
+    seoudi_files = os.listdir("Seoudi_tags")
+    carrefour_files = os.listdir("Carrefour_tags")
+
+    soeudi_files = [x.split("_")[-1].split(".")[0] for x in seoudi_files]
+    carrefour_files = [x.split("_")[-1].split(".")[0] for x in carrefour_files]
+
+    if today not in soeudi_files:
+        logging.info("Fetching new data for Seoudi_tags")
+        fetsh_data(required_data, "Seoudi_tags", get_data_from_seoudi)
+    else:
+        logging.info("Seoudi_tags data is up to date.")
+
+    if today not in carrefour_files:
+        logging.info("Fetching new data for Carrefour_tags")
+        fetsh_data(required_data, "Carrefour_tags", get_data_from_carrefour)
+    else:
+        logging.info("Carrefour_tags data is up to date.")
+
+
+if __name__ == "__main__":
+    run()
