@@ -33,8 +33,8 @@ def clean_data(df, product_column_name, weight_column_name, price_column_name):
         ),
         axis=1,
     )
-    new_df = df[["Date", "Product_Name", price_column_name, "Source"]]
-    new_df.columns = ["Date", "Product_Name", "Price", "Source"]
+    new_df = df[["Date", "Product_Name", price_column_name, "Source", "Category"]]
+    new_df.columns = ["Date", "Product_Name", "Price", "Source", "Category"]
     new_df.loc[:, "Date"] = pd.to_datetime(new_df["Date"], format="%m/%d/%Y")
     return new_df
 
@@ -69,9 +69,11 @@ st.sidebar.header("Filters")
 
 product_options = df["Product_Name"].unique().tolist()
 source_options = df["Source"].unique().tolist()
+category_options = df["Category"].unique().tolist()
 
 product = st.sidebar.multiselect("Select product", product_options, default=[])
 source = st.sidebar.multiselect("Select source", source_options, default=[])
+category = st.sidebar.multiselect("Select Category", category_options, default=[])
 
 min_date = df["Date"].min()
 max_date = df["Date"].max()
@@ -90,6 +92,9 @@ if product:
 if source:
     mask &= df["Source"].isin(source)
 
+if category:
+    mask &= df["Category"].isin(category)
+
 filtered_df = df.loc[mask]
 
 # -------------------------------
@@ -100,9 +105,11 @@ st.title("Price Tracking Dashboard")
 if filtered_df.empty:
     st.warning("No data available for the selected filters.")
 else:
-    fig, ax = plt.subplots(figsize=(8, 4))
-    for (prod, src), sub_df in filtered_df.groupby(["Product_Name", "Source"]):
-        ax.plot(sub_df["Date"], sub_df["Price"], marker="o", label=f"{prod} - {src}")
+    fig, ax = plt.subplots(figsize=(16, 8))
+    for (prod, src, cat), sub_df in filtered_df.groupby(
+        ["Product_Name", "Source", "Category"]
+    ):
+        ax.plot(sub_df["Date"], sub_df["Price"], marker="o", label=f"{prod}")
 
     ax.set_xlabel("Date")
     ax.set_ylabel("Price")

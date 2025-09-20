@@ -30,5 +30,13 @@
     "Foul":{
         "Seoudi_tags":["americana-plain-fava-beans-400-g"],
         "Carrefour_tags":["445206"]
+    },
+    "Onions":{
+        "Seoudi_tags":["khalils-farm-fresh-yellow-onions-1-kg"],
+        "Carrefour_tags":["32762"]
+    },
+    "Flour":{
+        "Seoudi_tags":["rehana-flour-1-kg","al-doha-flour-1-kg"],
+        "Carrefour_tags":["17966","576751"]
     }
 }

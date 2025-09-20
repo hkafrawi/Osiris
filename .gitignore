@@ -9,3 +9,16 @@ config.ini
 
 #ignore resulting data files
 *_tags
+
+#ignore log_files
+log_files
+
+#ignore notebooks
+*.ipynb
+*pyc
+
+#Vscode
+.vscode
+
+#ignore testing files
+test_data

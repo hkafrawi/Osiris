@@ -110,24 +110,26 @@ def fetsh_data(tags_data: json, tag_name_input: str, func: Callable) -> None:
     # arange tags for fetching
     logging.info(f"Fetching data for tag: {tag_name_input}")
     logging.info(f"tags_data: {tags_data}")
-    compiled_tags = []
 
-    for category in tags_data.keys():
-        for tag_name, tag_value in tags_data.get(category).items():
-            if tag_name == tag_name_input:
-                compiled_tags.extend(tag_value)
+    compiled_tags = []
+    for category, tag_groups in tags_data.items():
+        for tag_group_name, tag_values in tag_groups.items():
+            if tag_group_name == tag_name_input:
+                compiled_tags.append((tag_values, tag_group_name, category))
     logging.info(f"compiled_tags for {tag_name_input}: {compiled_tags}")
 
     compiled_data = []
-    for item in compiled_tags:
-        api_response = func(item)
-        structured_response = parse_data(api_response)
-        compiled_data.append(structured_response)
+    for tags, tag_group, category in compiled_tags:
+        for tag in tags:
+            api_response = func(tag)
+            structured_response = parse_data(api_response)
+            structured_response["Category"] = category
+            structured_response["Source"] = tag_group
+            compiled_data.append(structured_response)
     logging.info(f"compiled_data: {len(compiled_data)}")
 
     df_data = pd.concat(compiled_data, ignore_index=True)
     df_data["Date"] = date.today().strftime("%m/%d/%Y")
-    df_data["Source"] = tag_name_input
     save_data_to_csv(df_data, tag_name_input)
 
 
