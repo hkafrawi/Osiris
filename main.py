@@ -6,6 +6,7 @@ import configparser
 import os
 import logging
 from typing import Callable
+import httpx
 
 # Load config
 config = configparser.ConfigParser()
@@ -35,6 +36,7 @@ def get_data_from_carrefour(item_id: str):
     url = C_API_URL.format(item_id=item_id)
 
     payload = CARREFOUR_QUERY
+    payload = json.loads(payload)
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0)"
@@ -48,11 +50,13 @@ def get_data_from_carrefour(item_id: str):
         "Origin": "https://www.carrefouregypt.com",
         "Connection": "keep-alive",
     }
+    
+    logging.info(payload)    
+    with httpx.Client(http2=True, timeout=30.0) as client:
+        r = client.post(url,headers=headers, json=payload)
+    logging.info(r.status_code)
 
-    response = requests.request("POST", url, headers=headers, data=payload)
-
-    logging.info(response.status_code)
-    return response
+    return r
 
 
 def get_data_from_seoudi(item_id: str):
