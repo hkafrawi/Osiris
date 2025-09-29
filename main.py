@@ -51,10 +51,15 @@ def get_data_from_carrefour(item_id: str):
         "Connection": "keep-alive",
     }
     
-    logging.info(payload)    
-    with httpx.Client(http2=True, timeout=30.0) as client:
-        r = client.post(url,headers=headers, json=payload)
-    logging.info(r.status_code)
+    # logging.info(payload)    
+    try:
+        with httpx.Client(http2=True, timeout=30.0) as client:
+            r = client.post(url,headers=headers, json=payload)
+        logging.info(r.status_code)
+    except Exception as e:
+        logging.error(e)
+        r = {}
+        pass
 
     return r
 
