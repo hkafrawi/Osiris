@@ -1,0 +1,36 @@
+services:
+  scraper:
+    image: osiris:latest          # use the locally built image
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: osiris
+
+    # ── Volume Mounts ───────────────────────────────────────────────────────
+    # All output data and config live on the host; container stays stateless.
+    volumes:
+      - ./config.ini:/app/config.ini:ro          # config (read-only)
+      - ./required_data.json:/app/required_data.json:ro
+      - ./Seoudi_tags:/app/Seoudi_tags            # scraped CSVs
+      - ./Carrefour_tags:/app/Carrefour_tags       # scraped CSVs
+      - ./log_files:/app/log_files                 # logs
+
+    # ── Restart policy ──────────────────────────────────────────────────────
+    # "unless-stopped" keeps it running across reboots without fighting manual stops.
+    #restart: unless-stopped
+
+    # ── Resource limits (Pi 4B has 4–8 GB RAM; keep scraper lean) ──────────
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"          # max half a core
+          memory: 256M
+        reservations:
+          memory: 64M
+
+    # ── Logging ─────────────────────────────────────────────────────────────
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"          # keeps at most 15 MB of Docker logs on disk

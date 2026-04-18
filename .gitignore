@@ -22,3 +22,11 @@ log_files
 
 #ignore testing files
 test_data
+test.py
+templates/index.html
+
+#File management
+syncpi.sh
+
+#Cron Logs
+cron_logs/

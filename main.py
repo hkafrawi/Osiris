@@ -27,8 +27,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[logging.FileHandler(log_file_path, mode="a"), logging.StreamHandler()],
-)
-
+)   
 
 def get_data_from_carrefour(item_id: str):
     logging.info(f"Fetching data for item ID: {item_id}")
@@ -49,6 +48,7 @@ def get_data_from_carrefour(item_id: str):
         "storeid": "mafegy",
         "Origin": "https://www.carrefouregypt.com",
         "Connection": "keep-alive",
+        "Cookie": "cart_api=v2; cart_api=v2"
     }
     
     # logging.info(payload)    
@@ -60,7 +60,7 @@ def get_data_from_carrefour(item_id: str):
         logging.error(e)
         r = {}
         pass
-
+    #logging.info(r.cookies) # use this when we want to collect a cookie and paste it to our request
     return r
 
 
