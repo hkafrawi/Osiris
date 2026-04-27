@@ -34,3 +34,67 @@ services:
       options:
         max-size: "5m"
         max-file: "3"          # keeps at most 15 MB of Docker logs on disk
+  postgres:
+    image: postgres:16-alpine
+    container_name: osiris_postgres
+    environment:
+      POSTGRES_DB: osiris
+      POSTGRES_USER: hkafrawi
+      POSTGRES_PASSWORD: j082S7_NSUtK%u
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hkafrawi -d osiris"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - osiris_network
+
+  cleaner:
+    image: cleaner-pi:latest
+    build:
+      context: .
+      dockerfile: dockerfile.cleaner
+    container_name: osiris_cleaner
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: osiris
+      DB_USER: hkafrawi
+      DB_PASS: j082S7_NSUtK%u
+    volumes:
+      - ./Seoudi_tags:/app/Seoudi_tags:ro
+      - ./Carrefour_tags:/app/Carrefour_tags:ro
+      - ./log_files:/app/log_files
+    networks:
+      - osiris_network
+    restart: "no"
+  
+  metabase:
+    image: metabase/metabase:latest
+    container_name: osiris_metabase
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: osiris
+      MB_DB_PORT: 5432
+      MB_DB_USER: hkafrawi
+      MB_DB_PASS: j082S7_NSUtK%u
+      MB_DB_HOST: postgres
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - osiris_network
+networks:
+  osiris_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

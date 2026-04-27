@@ -1,0 +1,25 @@
+FROM python:3.11-slim-bookworm
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements_cleaner.txt .
+RUN pip install --no-cache-dir -r requirements_cleaner.txt \
+    && apt-get purge -y --auto-remove gcc
+
+COPY cleaner.py .
+
+RUN mkdir -p log_files Seoudi_tags Carrefour_tags
+
+RUN useradd -m cleaner && chown -R cleaner:cleaner /app
+USER cleaner
+
+CMD ["python", "cleaner.py"]
