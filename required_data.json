@@ -12,8 +12,8 @@
         "Carrefour_tags":["17964","598485"]
     },
     "Meat":{
-        "Seoudi_tags":["baladi-beef-kebab-halla"],
-        "Carrefour_tags":["426174"]
+        "Seoudi_tags":["baladi-beef-kebab-halla","minced-meat"],
+        "Carrefour_tags":["426174","31991"]
     },
     "Eggs":{
         "Seoudi_tags":["seoudi-baladi-eggs-10-pieces","al-waha-white-eggs-10-pieces"],
@@ -24,7 +24,7 @@
         "Carrefour_tags":["447683","644802","639240","644800"]
     },
     "Tomato":{
-        "Seoudi_tags":["mafa-baladi-tomato-1-kg"],
+        "Seoudi_tags":["mafa-baladi-tomato-1-kg","freshroots-fresh-tomato-1-kg"],
         "Carrefour_tags":["32631","576747"]
     },
     "Foul":{
@@ -38,5 +38,49 @@
     "Flour":{
         "Seoudi_tags":["rehana-flour-1-kg","al-doha-flour-1-kg"],
         "Carrefour_tags":["17966","576751"]
+    },
+    "Cucumbers":{
+        "Seoudi_tags":["farm-fresh-cucumbers-500-g","freshroots-cucumber-1-kg"],
+        "Carrefour_tags":["32594","213783"]
+    },
+    "Mangoes":{
+        "Seoudi_tags":["zebdia-mango","indian-menshawi-mango","heidi-mango","fas-ewis-mango","crimson-bride-mango"],
+        "Carrefour_tags":["208693","32521","32515","32510","244046","208696"]
+    },
+    "Bananas":{
+        "Seoudi_tags":["baladi-bananas"],
+        "Carrefour_tags":["458546","32567"]
+    },
+    "Citrics":{
+        "Seoudi_tags":["orange-for-juice-2-kg","morquette-tangerine"],
+        "Carrefour_tags":["408653"]
+    },
+    "Pears":{
+        "Seoudi_tags":["egyptian-pears"],
+        "Carrefour_tags":["43022","292807"]
+    },
+    "Eggplant":{
+        "Seoudi_tags":["eggplant"],
+        "Carrefour_tags":["32606","32608"]
+    },
+    "Milk":{
+        "Seoudi_tags":["جهينه-لبن-كامل-الدسم-1-لتر","almarai-full-cream-milk-1-liter"],
+        "Carrefour_tags":["12721","310889"]
+    },
+    "Ghee":{
+        "Seoudi_tags":["seoudi-natural-ghee-1-4-kg","crystal-golden-vegetable-ghee-2-kg","fern-pure-butter-ghee-450-g"],
+        "Carrefour_tags":["305569","612457","142156"]
+    },
+    "Fish":{
+        "Seoudi_tags":["super-tilapia-fish","large-mullet-fish"],
+        "Carrefour_tags":[]
+    },
+    "Bread":{
+        "Seoudi_tags":["rich-bake-whole-wheat-bread-5-pieces","rich-bake-shami-bread-5-pieces","tabali-baladi-bread-5-pieces","tabali-mini-baladi-bread-pack-of-20","rich-bake-bread-with-whole-wheat-and-oat-5-pieces","rich-bake-bread-with-whole-wheat-barley-5-pieces","rich-bake-baladi-bread-4-pieces"],
+        "Carrefour_tags":[]
+    },
+    "Honey":{
+        "Seoudi_tags":["el-bawadi-molasses-190-g","langnese-acacia-blossom-honey-250-g","seoudi-squeeze-clover-honey-500-g","seoudi-squeez-multi-floral-honey-500-g","seoudi-squeeze-citrus-honey-500-g","seoudi-multifloral-honey-800-g","seoudi-citrus-honey-800-g","seoudi-clover-honey-400-g","hero-citrus-honey-650-g","imtenan-medicinal-herbal-honey-450-g","imtenan-medicinal-herbal-honey-250-g","al-shifa-clover-honey-250-g"],
+        "Carrefour_tags":["532530","559380","262309","570976","262306","557797","460447","262290"]
     }
 }

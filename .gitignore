@@ -1,5 +1,6 @@
 #Virtual_Enviornment
 .venv
+.env
 
 #Git files
 .git
