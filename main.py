@@ -7,6 +7,8 @@ import os
 import logging
 from typing import Callable
 import httpx
+import random
+import time
 
 # Load config
 config = configparser.ConfigParser()
@@ -33,9 +35,7 @@ def get_data_from_carrefour(item_id: str):
     logging.info(f"Fetching data for item ID: {item_id}")
 
     url = C_API_URL.format(item_id=item_id)
-
-    payload = CARREFOUR_QUERY
-    payload = json.loads(payload)
+    payload = json.loads(CARREFOUR_QUERY)
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0)"
@@ -48,19 +48,15 @@ def get_data_from_carrefour(item_id: str):
         "storeid": "mafegy",
         "Origin": "https://www.carrefouregypt.com",
         "Connection": "keep-alive",
-        "Cookie": "cart_api=v2; cart_api=v2"
+        "Cookie": "cart_api=v2; cart_api=v2",
     }
-    
-    # logging.info(payload)    
-    try:
+
+    def _send():
         with httpx.Client(http2=True, timeout=30.0) as client:
-            r = client.post(url,headers=headers, json=payload)
-        logging.info(r.status_code)
-    except Exception as e:
-        logging.error(e)
-        r = {}
-        pass
-    #logging.info(r.cookies) # use this when we want to collect a cookie and paste it to our request
+            return client.post(url, headers=headers, json=payload)
+
+    r = post_with_backoff(_send, CARREFOUR_LIMITER)
+    logging.info(r.status_code)
     return r
 
 
@@ -78,33 +74,86 @@ def get_data_from_seoudi(item_id: str):
         "store": "default",
     }
 
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.request("POST", url, headers=headers, data=payload, timeout=30)
     logging.info(response.status_code)
     return response
 
+class RateLimiter:
+    """Enforce a minimum interval between requests."""
+    def __init__(self, min_interval: float, jitter: float = 0.3):
+        self.min_interval = min_interval
+        self.jitter = jitter
+        self._last = 0.0
 
-def parse_data(response):
-    json_response = json.loads(response.text)
+    def wait(self) -> None:
+        target = self.min_interval + random.uniform(0, self.jitter)
+        remaining = target - (time.monotonic() - self._last)
+        if remaining > 0:
+            time.sleep(remaining)
+        self._last = time.monotonic()
+
+
+CARREFOUR_LIMITER = RateLimiter(min_interval=1.5)
+
+
+def post_with_backoff(send, limiter, max_attempts=5, base_delay=10.0, max_wait=120.0):
+    """Throttle, send, and retry 429/5xx with backoff. Returns the final response."""
+    for attempt in range(1, max_attempts + 1):
+        limiter.wait()
+        response = send()
+        if response.status_code not in (429, 500, 502, 503, 504) or attempt == max_attempts:
+            return response
+
+        retry_after = response.headers.get("Retry-After")
+        try:
+            wait = float(retry_after) if retry_after else base_delay * 2 ** (attempt - 1)
+        except ValueError:
+            wait = base_delay * 2 ** (attempt - 1)
+        wait = min(wait, max_wait) + random.uniform(0, 2)
+
+        if attempt == 1:
+            logging.warning("HTTP %d headers: %s", response.status_code, dict(response.headers))
+        logging.warning("Attempt %d/%d got HTTP %d; sleeping %.1fs",
+                        attempt, max_attempts, response.status_code, wait)
+        time.sleep(wait)
+
+class ParseError(ValueError):
+    """Response was received but contained no usable product data."""
+
+
+def parse_data(response) -> pd.DataFrame:
+    """Parse a Seoudi or Carrefour response into a flat DataFrame.
+
+    Raises:
+        httpx.HTTPStatusError / requests.HTTPError: non-2xx status.
+        ParseError: invalid JSON, GraphQL errors, null/empty payload,
+            or unrecognised schema.
+    """
+    response.raise_for_status()  # works for both requests and httpx
+
     try:
-        logging.info("Parsing for Seoudi Data")
-        logging.info(
-            "json file's keys number {}".format(len(json_response["data"]["product"]))
-        )
+        payload = response.json()
+    except ValueError as exc:
+        raise ParseError("Body is not valid JSON") from exc
 
-        result = pd.json_normalize(json_response["data"]["product"])
-        return result
-    except (KeyError, NotImplementedError):
-        logging.error("Parsing for Carrefour Data")
-        logging.info(
-            "json file's keys number {}".format(
-                len(json_response["data"]["placements"][0]["recommendedProducts"])
-            )
-        )
+    if payload.get("errors"):
+        raise ParseError(f"API returned errors: {payload['errors']}")
 
-        result = pd.json_normalize(
-            json_response["data"]["placements"][0]["recommendedProducts"]
-        )
-        return result
+    data = payload.get("data") or {}
+
+    if "product" in data:                       # Seoudi schema
+        source, records = "Seoudi", data["product"]
+    elif data.get("placements"):                # Carrefour schema
+        source = "Carrefour"
+        records = data["placements"][0].get("recommendedProducts")
+    else:
+        raise ParseError(f"Unrecognised schema; keys: {list(data)}")
+
+    if not records:
+        raise ParseError(f"{source}: product is null/empty (delisted or bad slug?)")
+
+    logging.info("Parsed %s payload (%d top-level entries)", source, len(records))
+    return pd.json_normalize(records)
 
 
 def save_data_to_csv(data: pd.DataFrame, source: str):
@@ -115,27 +164,56 @@ def save_data_to_csv(data: pd.DataFrame, source: str):
     data.to_csv(filepath, index=False)
 
 
-def fetsh_data(tags_data: json, tag_name_input: str, func: Callable) -> None:
-    # arange tags for fetching
-    logging.info(f"Fetching data for tag: {tag_name_input}")
-    logging.info(f"tags_data: {tags_data}")
+def fetsh_data(tags_data: dict, tag_name_input: str, func: Callable) -> None:
+    logging.info("Fetching data for tag: %s", tag_name_input)
 
-    compiled_tags = []
-    for category, tag_groups in tags_data.items():
-        for tag_group_name, tag_values in tag_groups.items():
-            if tag_group_name == tag_name_input:
-                compiled_tags.append((tag_values, tag_group_name, category))
-    logging.info(f"compiled_tags for {tag_name_input}: {compiled_tags}")
+    compiled_tags = [
+        (tag_values, tag_group_name, category)
+        for category, tag_groups in tags_data.items()
+        for tag_group_name, tag_values in tag_groups.items()
+        if tag_group_name == tag_name_input
+    ]
 
-    compiled_data = []
+    compiled_data: list[pd.DataFrame] = []
+    failures: list[dict] = []
+
     for tags, tag_group, category in compiled_tags:
         for tag in tags:
-            api_response = func(tag)
-            structured_response = parse_data(api_response)
-            structured_response["Category"] = category
-            structured_response["Source"] = tag_group
-            compiled_data.append(structured_response)
-    logging.info(f"compiled_data: {len(compiled_data)}")
+            try:
+                api_response = func(tag)
+                df = parse_data(api_response)
+            except Exception as exc:  # per-item boundary; KeyboardInterrupt still propagates
+                logging.error(
+                    "Failed item %r (category=%s, source=%s): %s: %s",
+                    tag, category, tag_group, type(exc).__name__, exc,
+                )
+                failures.append({
+                    "item": tag,
+                    "category": category,
+                    "source": tag_group,
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                })
+                continue
+
+            df["Category"] = category
+            df["Source"] = tag_group
+            compiled_data.append(df)
+
+    logging.info(
+        "%s: %d succeeded, %d failed", tag_name_input, len(compiled_data), len(failures)
+    )
+
+    if failures:
+        failed_path = os.path.join(
+            log_dir, f"failed_{tag_name_input}_{date.today():%m%d%Y}.csv"
+        )
+        pd.DataFrame(failures).to_csv(failed_path, index=False)
+        logging.warning("Failed items written to %s", failed_path)
+
+    if not compiled_data:
+        logging.error("No data collected for %s; nothing saved", tag_name_input)
+        return
 
     df_data = pd.concat(compiled_data, ignore_index=True)
     df_data["Date"] = date.today().strftime("%m/%d/%Y")

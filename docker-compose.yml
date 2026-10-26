@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: osiris
+    container_name: osiris_scraper
 
     # ── Volume Mounts ───────────────────────────────────────────────────────
     # All output data and config live on the host; container stays stateless.
